@@ -1,13 +1,11 @@
 /* eslint-disable camelcase */
-import React, { useState, FormEvent } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { FiChevronRight } from 'react-icons/fi';
 import api from '../../services/api';
 
 import logoImg from '../../assets/logo.svg';
 
-import {
-  Title, Form, Repositories, Error,
-} from './styles';
+import { Title, Form, Repositories, Error } from './styles';
 
 interface Repository {
   full_name: string;
@@ -15,15 +13,33 @@ interface Repository {
   owner: {
     login: string;
     avatar_url: string;
-  }
+  };
 }
 
 const Dashboard: React.FC = () => {
   const [newRepo, setNewRepo] = useState('');
   const [inputError, setInputError] = useState('');
-  const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [repositories, setRepositories] = useState<Repository[]>(() => {
+    const storageRepositories = localStorage.getItem(
+      '@GithubExplorer:repositories',
+    );
 
-  async function handleAddRepository(event: FormEvent<HTMLFormElement>): Promise<void> {
+    if (storageRepositories) {
+      return JSON.parse(storageRepositories);
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem(
+      '@GithubExplorer:repositories',
+      JSON.stringify(repositories),
+    );
+  }, [repositories]);
+
+  async function handleAddRepository(
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> {
     event.preventDefault();
 
     if (!newRepo) {
@@ -52,16 +68,16 @@ const Dashboard: React.FC = () => {
       <Form hasError={!!inputError} onSubmit={handleAddRepository}>
         <input
           value={newRepo}
-          onChange={(e) => setNewRepo(e.target.value)}
+          onChange={e => setNewRepo(e.target.value)}
           placeholder="Digite o nome do repositório"
         />
         <button type="submit">Pesquisar</button>
       </Form>
 
-      { inputError && <Error>{inputError}</Error>}
+      {inputError && <Error>{inputError}</Error>}
 
       <Repositories>
-        {repositories.map((repository) => (
+        {repositories.map(repository => (
           <a key={repository.full_name} href="teste">
             <img
               src={repository.owner.avatar_url}
